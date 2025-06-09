@@ -24,10 +24,14 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, RegisterR
         if (await _users.EmailExistsAsync(request.Email, cancellationToken))
             throw new InvalidOperationException("Пользователь с таким email уже существует");
 
+        // UserName обязательно! Если не передали — использовать email
+        var userName = !string.IsNullOrWhiteSpace(request.UserName) ? request.UserName : request.Email;
+
         var user = new User
         {
             Id = Guid.NewGuid(),
             Email = request.Email,
+            UserName = userName, // <--- ключевая строка!
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
             CreatedAt = DateTime.UtcNow
         };

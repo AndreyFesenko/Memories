@@ -27,8 +27,6 @@ namespace IdentityService.API.Controllers
         /// <remarks>
         /// Введите email и пароль для получения JWT и refresh token.
         /// </remarks>
-        /// <response code="200">Вход выполнен успешно</response>
-        /// <response code="401">Неверный email или пароль</response>
         [HttpPost("login")]
         [SwaggerOperation(Summary = "Вход пользователя", Description = "Выполняет вход и выдаёт access/refresh токены")]
         [ProducesResponseType(typeof(LoginResponse), 200)]
@@ -45,8 +43,6 @@ namespace IdentityService.API.Controllers
         /// <remarks>
         /// После регистрации пользователь получает свой Id и email.
         /// </remarks>
-        /// <response code="200">Регистрация прошла успешно</response>
-        /// <response code="400">Валидация не пройдена</response>
         [HttpPost("register")]
         [SwaggerOperation(Summary = "Регистрация нового пользователя")]
         [ProducesResponseType(typeof(RegisterResponse), 200)]
@@ -60,70 +56,80 @@ namespace IdentityService.API.Controllers
         /// <summary>
         /// Обновить токен доступа по refresh-токену
         /// </summary>
-        /// <remarks>
-        /// Используйте этот endpoint для получения нового access token.
-        /// </remarks>
-        /// <response code="200">Токены обновлены</response>
-        /// <response code="401">Неверный refresh token</response>
         [HttpPost("refresh")]
         [SwaggerOperation(Summary = "Обновить access token по refresh")]
         [ProducesResponseType(typeof(LoginResponse), 200)]
         [ProducesResponseType(401)]
+        public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest command)
+        {
+            var response = await _mediator.Send(command);
+            return Ok(response);
+        }
+
         /// <summary>
         /// Logout (инвалидирует refresh-токен)
         /// </summary>
         [HttpPost("logout")]
+        [SwaggerOperation(Summary = "Выход (logout)")]
         public async Task<IActionResult> Logout([FromBody] LogoutCommand cmd)
         {
             await _mediator.Send(cmd);
-            return Ok();
+            return Ok(new { message = "Logged out" });
         }
 
+        /// <summary>
+        /// Запросить подтверждение email
+        /// </summary>
         [HttpPost("request-confirmation")]
+        [SwaggerOperation(Summary = "Запросить подтверждение email")]
         public async Task<IActionResult> RequestConfirmation([FromBody] RequestEmailConfirmationCommand cmd, CancellationToken ct)
         {
             await _mediator.Send(cmd, ct);
             return Ok(new { message = "Confirmation link sent (check console for MVP)" });
         }
 
+        /// <summary>
+        /// Сменить пароль
+        /// </summary>
         [HttpPost("change-password")]
-        public async Task<IActionResult> ChangePassword(ChangePasswordCommand command)
+        [SwaggerOperation(Summary = "Сменить пароль")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordCommand command)
         {
             await _mediator.Send(command);
             return Ok("Пароль успешно изменён");
         }
 
+        /// <summary>
+        /// Подтвердить email
+        /// </summary>
         [HttpPost("confirm-email")]
+        [SwaggerOperation(Summary = "Подтвердить email")]
         public async Task<IActionResult> ConfirmEmail([FromBody] ConfirmEmailCommand cmd, CancellationToken ct)
         {
             await _mediator.Send(cmd, ct);
             return Ok(new { message = "Email confirmed!" });
         }
 
+        /// <summary>
+        /// Запросить сброс пароля
+        /// </summary>
         [HttpPost("request-password-reset")]
+        [SwaggerOperation(Summary = "Запросить сброс пароля")]
         public async Task<IActionResult> RequestPasswordReset([FromBody] RequestPasswordResetCommand cmd, CancellationToken ct)
         {
             await _mediator.Send(cmd, ct);
             return Ok(new { message = "Reset link sent (check console for MVP)" });
         }
 
+        /// <summary>
+        /// Сбросить пароль
+        /// </summary>
         [HttpPost("reset-password")]
+        [SwaggerOperation(Summary = "Сбросить пароль")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordCommand cmd, CancellationToken ct)
         {
             await _mediator.Send(cmd, ct);
             return Ok(new { message = "Password changed!" });
-        }
-
-        public async Task<IActionResult> Logout([FromBody] LogoutRequest request, CancellationToken ct)
-        {
-            await _refreshTokens.InvalidateAsync(request.RefreshToken, ct);
-            return Ok(new { message = "Logged out" });
-        }
-
-        public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest command)
-        {
-            var response = await _mediator.Send(command);
-            return Ok(response);
         }
 
         /// <summary>
